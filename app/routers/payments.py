@@ -7,10 +7,7 @@ from app.models.user import User
 from app.models.booking import Booking, BookingStatus
 from app.models.payment import Payment, PaymentStatus
 from app.schemas.payment import PaymentCreate, PaymentOut
-from app.services.payment_simulator import (
-    generate_provider_reference,
-    simulate_payment_result,
-)
+from app.services import payment_simulator
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
@@ -39,13 +36,13 @@ def make_payment(
             detail=f"Cannot process payment for a booking with status {booking.status.value}.",
         )
 
-    result = simulate_payment_result()
+    result = payment_simulator.simulate_payment_result()
 
     payment = Payment(
         booking_id=booking.id,
         amount=booking.amount,
         status=result,
-        provider_reference=generate_provider_reference(),
+        provider_reference=payment_simulator.generate_provider_reference(),
     )
     db.add(payment)
 
