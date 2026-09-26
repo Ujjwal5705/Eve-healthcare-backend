@@ -44,6 +44,24 @@ def create_booking(
             detail="This test is not offered at the selected centre.",
         )
 
+    # Prevent the same user from double-booking the same test/centre/time slot.
+    duplicate = (
+        db.query(Booking)
+        .filter(
+            Booking.user_id == current_user.id,
+            Booking.test_id == test.id,
+            Booking.centre_id == centre.id,
+            Booking.appointment_time == booking_in.appointment_time,
+            Booking.status.in_([BookingStatus.PENDING, BookingStatus.CONFIRMED]),
+        )
+        .first()
+    )
+    if duplicate:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You already have an active booking for this test at this centre and time.",
+        )
+
     booking = Booking(
         user_id=current_user.id,
         test_id=test.id,
